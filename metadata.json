@@ -1,0 +1,6 @@
+{
+  "name": "KisanSetu",
+  "description": "Agricultural Hardware Marketplace connecting farmers with local hardware shops for irrigation, tools, pumps, and farm equipment.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

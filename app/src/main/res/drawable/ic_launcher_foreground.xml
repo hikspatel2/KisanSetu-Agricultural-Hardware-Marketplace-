@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Golden gear base representing hardware -->
+    <path
+        android:fillColor="#FFD54F"
+        android:pathData="M54,32 C41.85,32 32,41.85 32,54 C32,66.15 41.85,76 54,76 C66.15,76 76,66.15 76,54 C76,41.85 66.15,32 54,32 Z M54,41 C61.18,41 67,46.82 67,54 C67,61.18 61.18,67 54,67 C46.82,67 41,61.18 41,54 C41,46.82 46.82,41 54,41 Z" />
+    <!-- Gear teeth -->
+    <path
+        android:fillColor="#FFCA28"
+        android:pathData="M51,26 L57,26 L56,33 L52,33 Z M51,75 L57,75 L56,82 L52,82 Z M26,51 L26,57 L33,56 L33,52 Z M75,51 L75,57 L82,56 L82,52 Z M35,33 L39,37 L34,42 L30,38 Z M69,67 L73,71 L78,66 L74,62 Z M73,35 L69,39 L74,44 L78,40 Z M35,73 L39,69 L34,64 L30,68 Z" />
+    <!-- Central agricultural sprout and droplet in white -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,40 C54,40 44,48 44,57 C44,62.5 48.5,67 54,67 C59.5,67 64,62.5 64,57 C64,48 54,40 54,40 Z M54,64 C50.1,64 47,60.9 47,57 C47,51.8 52.2,46.1 54,44.2 C55.8,46.1 61,51.8 61,57 C61,60.9 57.9,64 54,64 Z" />
+    <path
+        android:fillColor="#81C784"
+        android:pathData="M54,49 C54,49 57,51 57,54 C57,56 55.5,57 54,57 Z" />
+</vector>
