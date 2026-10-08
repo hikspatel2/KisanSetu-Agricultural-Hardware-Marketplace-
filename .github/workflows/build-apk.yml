@@ -164,17 +164,17 @@ jobs:
           RELEASE_TAG="debug-apk-build-${RUN_NUMBER}-${RUN_ATTEMPT}"
           RELEASE_TITLE="Debug APK Build #${RUN_NUMBER}"
 
-          cat <<EOF > release_notes.md
-### Automated Debug APK Build
-
-- **Build Source:** This is an automatically generated debug APK built by GitHub Actions.
-- **Run Number:** ${RUN_NUMBER}
-- **Run Attempt:** ${RUN_ATTEMPT}
-- **Commit SHA:** ${COMMIT_SHA}
-- **Testing Notice:** This APK is intended for testing.
-- **Production Status:** This APK is not a Play Store production release.
-- **Keystore:** This APK is signed only with a temporary debug keystore.
-EOF
+          {
+            echo "### Automated Debug APK Build"
+            echo ""
+            echo "- **Build Source:** This is an automatically generated debug APK built by GitHub Actions."
+            echo "- **Run Number:** ${RUN_NUMBER}"
+            echo "- **Run Attempt:** ${RUN_ATTEMPT}"
+            echo "- **Commit SHA:** ${COMMIT_SHA}"
+            echo "- **Testing Notice:** This APK is intended for testing."
+            echo "- **Production Status:** This APK is not a Play Store production release."
+            echo "- **Keystore:** This APK is signed only with a temporary debug keystore."
+          } > release_notes.md
 
           echo "Publishing release with tag: $RELEASE_TAG, title: $RELEASE_TITLE"
           gh release create "$RELEASE_TAG" "$ASSET_PATH" \
