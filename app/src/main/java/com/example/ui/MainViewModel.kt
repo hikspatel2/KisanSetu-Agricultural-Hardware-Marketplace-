@@ -17,6 +17,7 @@ sealed class ScreenDestination {
     // Farmer destinations
     data object FarmerHome : ScreenDestination()
     data class FarmerCategoryProducts(val categoryName: String) : ScreenDestination()
+    data object AgriculturalEquipment : ScreenDestination()
     data class FarmerProductDetail(val productId: String) : ScreenDestination()
     data class FarmerShopDetail(val sellerId: String) : ScreenDestination()
     data object FarmerCart : ScreenDestination()
@@ -62,6 +63,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     // Data streams from repository
     val currentUser = repository.currentUser
+    val currentFarmerProfile = repository.currentFarmerProfile
     val currentSellerProfile = repository.currentSellerProfile
     val appSettings = repository.appSettings
     val categories = repository.categories
@@ -70,7 +72,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val allOrders = repository.orders
     val orderRequests = repository.orderRequests
     val notifications = repository.notifications
-    val cartItems = repository.getCartItemsFlow().stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    val cartItems = repository.getCartItemsFlow().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     // Filtered Nearby Approved Shops for Farmer
     val nearbyApprovedShops = combine(currentUser, allSellers, appSettings) { user, sellers, settings ->
@@ -84,7 +86,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             .filter { (_, dist) -> dist <= radius }
             .sortedBy { it.second }
-    }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     // Filtered Products for Farmer Discovery
     val filteredProducts = combine(
@@ -96,8 +98,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     ) { products, nearbyShops, query, category, maxPrice ->
         val approvedSellerIds = nearbyShops.map { it.first.id }.toSet()
         products.filter { prod ->
-            // Must belong to an approved nearby seller
-            approvedSellerIds.contains(prod.sellerId) &&
+            // Belong to approved nearby seller or all available if initial load
+            (approvedSellerIds.isEmpty() || approvedSellerIds.contains(prod.sellerId)) &&
             prod.isAvailable &&
             (category == null || prod.category.equals(category, ignoreCase = true)) &&
             (query.isEmpty() ||
@@ -107,7 +109,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     prod.sku.contains(query, ignoreCase = true)) &&
             (maxPrice == null || prod.price <= maxPrice)
         }
-    }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     // Farmer Orders
     val farmerOrders = combine(currentUser, allOrders) { user, orders ->
@@ -228,6 +230,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 showMessage(result.exceptionOrNull()?.message ?: "Registration failed")
             }
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            repository.logout()
+            _currentScreen.value = ScreenDestination.Login
+            showMessage("Logged out")
         }
     }
 

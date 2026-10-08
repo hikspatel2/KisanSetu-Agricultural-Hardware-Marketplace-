@@ -43,6 +43,37 @@ enum class PaymentStatus {
 }
 
 @JsonClass(generateAdapter = true)
+data class DeliveryAddress(
+    val id: String,
+    val label: String = "Farm", // "Farm", "Home", "Pump House"
+    val addressLine: String,
+    val villageOrTown: String,
+    val taluka: String = "",
+    val district: String = "Anand",
+    val state: String = "Gujarat",
+    val pincode: String = "388001",
+    val latitude: Double = 23.0225,
+    val longitude: Double = 72.5714,
+    val isDefault: Boolean = false
+)
+
+@JsonClass(generateAdapter = true)
+data class FarmerProfile(
+    val id: String,
+    val userId: String,
+    val fullName: String,
+    val farmName: String? = "Patel Krushi Farm",
+    val farmSizeAcres: Double? = 5.0,
+    val primaryCrops: List<String> = listOf("Cotton", "Wheat", "Vegetables"),
+    val irrigationType: String? = "Drip & Openwell",
+    val savedAddresses: List<DeliveryAddress> = emptyList(),
+    val defaultAddress: DeliveryAddress? = null,
+    val preferredLanguage: String = "en", // "en", "gu", "hi"
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
+)
+
+@JsonClass(generateAdapter = true)
 data class User(
     val id: String,
     val name: String,
@@ -54,6 +85,10 @@ data class User(
     val pincode: String = "",
     val latitude: Double = 23.0225, // Default agricultural hub e.g., Gujarat
     val longitude: Double = 72.5714,
+    val farmerProfileId: String? = null,
+    val sellerProfileId: String? = null,
+    val isActive: Boolean = true,
+    val lastLoginAt: Long = System.currentTimeMillis(),
     val token: String = "token_${System.currentTimeMillis()}"
 )
 
@@ -77,7 +112,20 @@ data class SellerProfile(
     val rating: Double = 4.8,
     val totalRatings: Int = 12,
     val isAvailable: Boolean = true,
-    val createdAt: Long = System.currentTimeMillis()
+    val businessHours: String = "08:00 AM - 08:00 PM",
+    val categoriesSupported: List<String> = listOf("Irrigation", "Agricultural Tools", "Farm Equipment", "Electrical", "Other Hardware"),
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
+)
+
+@JsonClass(generateAdapter = true)
+data class AuthSession(
+    val user: User,
+    val role: UserRole,
+    val farmerProfile: FarmerProfile? = null,
+    val sellerProfile: SellerProfile? = null,
+    val token: String,
+    val expiresAt: Long = System.currentTimeMillis() + 30L * 24 * 60 * 60 * 1000 // 30 days
 )
 
 @JsonClass(generateAdapter = true)
@@ -86,30 +134,6 @@ data class Category(
     val name: String,
     val iconName: String,
     val subcategories: List<String>
-)
-
-@JsonClass(generateAdapter = true)
-data class Product(
-    val id: String,
-    val sellerId: String,
-    val sellerName: String,
-    val name: String,
-    val category: String,
-    val subcategory: String,
-    val brand: String,
-    val sku: String,
-    val description: String,
-    val imageUrl: String,
-    val price: Double,
-    val discountPrice: Double? = null,
-    val unit: String, // e.g. "meter", "piece", "bundle", "set", "hp"
-    val stockQuantity: Int,
-    val minOrderQuantity: Int = 1,
-    val isAvailable: Boolean = true,
-    val rating: Double = 4.5,
-    val totalRatings: Int = 8,
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
 )
 
 @JsonClass(generateAdapter = true)

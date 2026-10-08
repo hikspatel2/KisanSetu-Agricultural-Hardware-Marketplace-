@@ -151,6 +151,7 @@ fun FarmerCartScreen(
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, AgriBorder),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 12.dp)
@@ -161,15 +162,13 @@ fun FarmerCartScreen(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(70.dp)
+                                    .size(72.dp)
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(AgriSurfaceVariant)
                             ) {
-                                AsyncImage(
-                                    model = item.product.imageUrl,
-                                    contentDescription = item.product.name,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.fillMaxSize()
+                                com.example.ui.components.ProductThumbnail(
+                                    product = item.product,
+                                    modifier = Modifier.fillMaxSize(),
+                                    showBadges = false
                                 )
                             }
 
@@ -699,6 +698,7 @@ fun FarmerProfileScreen(
     onBack: () -> Unit
 ) {
     val currentUser by viewModel.currentUser.collectAsState()
+    val farmerProfile by viewModel.currentFarmerProfile.collectAsState()
 
     Scaffold(
         topBar = {
@@ -746,7 +746,83 @@ fun FarmerProfileScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Agricultural Details Card
+            farmerProfile?.let { fp ->
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("FARM & AGRICULTURAL DETAILS", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = TextSecondary, letterSpacing = 1.sp)
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Farm Name", fontSize = 13.sp, color = TextSecondary)
+                            Text(fp.farmName ?: "Patel Krushi Farm", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Land Size", fontSize = 13.sp, color = TextSecondary)
+                            Text("${fp.farmSizeAcres ?: 12.5} Acres", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Irrigation Type", fontSize = 13.sp, color = TextSecondary)
+                            Text(fp.irrigationType ?: "Drip & Openwell", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = AgriGreenPrimary)
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Crops Cultivated", fontSize = 13.sp, color = TextSecondary)
+                            Text(fp.primaryCrops.joinToString(", "), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Saved Farm Delivery Locations
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("SAVED DELIVERY LOCATIONS (${fp.savedAddresses.size})", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = TextSecondary, letterSpacing = 1.sp)
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        fp.savedAddresses.forEach { addr ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.LocationOn, contentDescription = null, tint = AgriGreenPrimary, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(addr.label, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                        if (addr.isDefault) {
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Surface(color = AgriGreenContainer, shape = RoundedCornerShape(4.dp)) {
+                                                Text("DEFAULT", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = AgriGreenPrimary, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
+                                            }
+                                        }
+                                    }
+                                    Text("${addr.addressLine}, ${addr.villageOrTown} (${addr.pincode})", fontSize = 12.sp, color = TextSecondary)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // Switch to Seller Role Card
             Card(

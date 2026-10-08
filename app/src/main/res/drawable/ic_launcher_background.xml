@@ -18,8 +18,4 @@
             </gradient>
         </aapt:attr>
     </path>
-    <!-- Subtle circular radial accent -->
-    <path
-        android:fillColor="#15FFFFFF"
-        android:pathData="M54,14 A40,40 0 1,0 54,94 A40,40 0 1,0 54,14 Z" />
 </vector>

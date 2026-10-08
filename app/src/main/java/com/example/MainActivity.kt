@@ -17,7 +17,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.example.data.model.UserRole
 import com.example.ui.MainViewModel
 import com.example.ui.ScreenDestination
@@ -68,12 +70,8 @@ fun KisanSetuApp(viewModel: MainViewModel) {
         viewModel.navigateBack()
     }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            when (val screen = currentScreen) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        when (val screen = currentScreen) {
                 is ScreenDestination.Login -> {
                     LoginScreen(
                         viewModel = viewModel,
@@ -127,6 +125,19 @@ fun KisanSetuApp(viewModel: MainViewModel) {
                         },
                         onNavigateToProfile = {
                             viewModel.navigateTo(ScreenDestination.FarmerProfile)
+                        }
+                    )
+                }
+
+                is ScreenDestination.AgriculturalEquipment -> {
+                    AgriculturalEquipmentScreen(
+                        viewModel = viewModel,
+                        onBack = { viewModel.navigateBack() },
+                        onNavigateToProduct = { productId ->
+                            viewModel.navigateTo(ScreenDestination.FarmerProductDetail(productId))
+                        },
+                        onNavigateToCart = {
+                            viewModel.navigateTo(ScreenDestination.FarmerCart)
                         }
                     )
                 }
@@ -263,13 +274,19 @@ fun KisanSetuApp(viewModel: MainViewModel) {
                     )
                 }
             }
+
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 80.dp)
+            )
+
+            if (showAdminPanel) {
+                AdminPanelSheet(
+                    viewModel = viewModel,
+                    onDismiss = { viewModel.toggleAdminPanel(false) }
+                )
+            }
         }
     }
-
-    if (showAdminPanel) {
-        AdminPanelSheet(
-            viewModel = viewModel,
-            onDismiss = { viewModel.toggleAdminPanel(false) }
-        )
-    }
-}

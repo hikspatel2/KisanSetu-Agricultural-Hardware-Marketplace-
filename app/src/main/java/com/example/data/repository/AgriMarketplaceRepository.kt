@@ -18,7 +18,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.math.*
 
-class AgriMarketplaceRepository(private val context: Context) {
+class AgriMarketplaceRepository(private val context: Context) :
+    IAuthRepository,
+    IFarmerProfileRepository,
+    ISellerProfileRepository {
 
     private val db = AppDatabase.getDatabase(context)
     private val cartDao = db.cartDao()
@@ -29,10 +32,18 @@ class AgriMarketplaceRepository(private val context: Context) {
     // Session State
     // -------------------------------------------------------------------------
     private val _currentUser = MutableStateFlow<User?>(null)
+    override val currentUserFlow: Flow<User?> = _currentUser.asStateFlow()
     val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
 
+    private val _currentFarmerProfile = MutableStateFlow<FarmerProfile?>(null)
+    val currentFarmerProfile: StateFlow<FarmerProfile?> = _currentFarmerProfile.asStateFlow()
+
     private val _currentSellerProfile = MutableStateFlow<SellerProfile?>(null)
+    override val currentSellerProfileFlow: Flow<SellerProfile?> = _currentSellerProfile.asStateFlow()
     val currentSellerProfile: StateFlow<SellerProfile?> = _currentSellerProfile.asStateFlow()
+
+    private val _currentSession = MutableStateFlow<AuthSession?>(null)
+    override val currentSessionFlow: Flow<AuthSession?> = _currentSession.asStateFlow()
 
     // App Settings
     private val _appSettings = MutableStateFlow(AppSettings())
@@ -457,6 +468,9 @@ class AgriMarketplaceRepository(private val context: Context) {
     // -------------------------------------------------------------------------
     // Authentication & Profile
     // -------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
+    // Authentication & Profile Implementations
+    // -------------------------------------------------------------------------
     fun loginAsDefaultFarmer() {
         val farmer = User(
             id = "farmer_1",
@@ -468,10 +482,65 @@ class AgriMarketplaceRepository(private val context: Context) {
             city = "Anand",
             pincode = "388001",
             latitude = 23.0225,
-            longitude = 72.5714
+            longitude = 72.5714,
+            farmerProfileId = "fp_farmer_1"
+        )
+        val defaultFarmerProfile = FarmerProfile(
+            id = "fp_farmer_1",
+            userId = farmer.id,
+            fullName = farmer.name,
+            farmName = "Patel Krushi Farm",
+            farmSizeAcres = 12.5,
+            primaryCrops = listOf("Cotton", "Wheat", "Tobacco", "Vegetables"),
+            irrigationType = "Drip & Openwell Submersible",
+            savedAddresses = listOf(
+                DeliveryAddress(
+                    id = "addr_1",
+                    label = "Farm Plot 42",
+                    addressLine = "Plot #42, Vasna Road",
+                    villageOrTown = "Vasna",
+                    district = "Anand",
+                    state = "Gujarat",
+                    pincode = "388001",
+                    latitude = 23.0225,
+                    longitude = 72.5714,
+                    isDefault = true
+                ),
+                DeliveryAddress(
+                    id = "addr_2",
+                    label = "Borewell Pump House",
+                    addressLine = "Near Canal Sub-Division #3",
+                    villageOrTown = "Chikhodra",
+                    district = "Anand",
+                    state = "Gujarat",
+                    pincode = "388320",
+                    latitude = 23.0410,
+                    longitude = 72.5890,
+                    isDefault = false
+                )
+            ),
+            defaultAddress = DeliveryAddress(
+                id = "addr_1",
+                label = "Farm Plot 42",
+                addressLine = "Plot #42, Vasna Road",
+                villageOrTown = "Vasna",
+                district = "Anand",
+                state = "Gujarat",
+                pincode = "388001",
+                latitude = 23.0225,
+                longitude = 72.5714,
+                isDefault = true
+            )
         )
         _currentUser.value = farmer
+        _currentFarmerProfile.value = defaultFarmerProfile
         _currentSellerProfile.value = null
+        _currentSession.value = AuthSession(
+            user = farmer,
+            role = UserRole.FARMER,
+            farmerProfile = defaultFarmerProfile,
+            token = farmer.token
+        )
     }
 
     fun loginAsDefaultSeller() {
@@ -485,11 +554,19 @@ class AgriMarketplaceRepository(private val context: Context) {
             city = "Anand",
             pincode = "388001",
             latitude = 23.0250,
-            longitude = 72.5750
+            longitude = 72.5750,
+            sellerProfileId = "seller_patel"
         )
         val profile = _sellers.value.find { it.id == "seller_patel" }
         _currentUser.value = sellerUser
+        _currentFarmerProfile.value = null
         _currentSellerProfile.value = profile
+        _currentSession.value = AuthSession(
+            user = sellerUser,
+            role = UserRole.SELLER,
+            sellerProfile = profile,
+            token = sellerUser.token
+        )
     }
 
     fun switchUserRole(role: UserRole) {
@@ -500,7 +577,11 @@ class AgriMarketplaceRepository(private val context: Context) {
         }
     }
 
-    suspend fun verifyOtp(phone: String, otp: String, role: UserRole): Result<User> {
+    override suspend fun requestOtp(phone: String, requestedRole: UserRole): Result<String> {
+        return Result.success("OTP sent to +91 $phone successfully.")
+    }
+
+    override suspend fun verifyOtp(phone: String, otp: String, role: UserRole): Result<AuthSession> {
         if (otp.length != 4 && otp.length != 6) {
             return Result.failure(Exception("Please enter a valid 4 or 6 digit OTP"))
         }
@@ -515,9 +596,17 @@ class AgriMarketplaceRepository(private val context: Context) {
                 city = "Anand",
                 pincode = "388001"
             )
+            val profile = FarmerProfile(
+                id = "fp_" + user.id,
+                userId = user.id,
+                fullName = user.name
+            )
             _currentUser.value = user
+            _currentFarmerProfile.value = profile
             _currentSellerProfile.value = null
-            return Result.success(user)
+            val session = AuthSession(user = user, role = UserRole.FARMER, farmerProfile = profile, token = user.token)
+            _currentSession.value = session
+            return Result.success(session)
         } else {
             // Find existing seller or create placeholder profile
             val existingSeller = _sellers.value.find { it.userId.endsWith(phone.takeLast(4)) }
@@ -528,12 +617,134 @@ class AgriMarketplaceRepository(private val context: Context) {
                 role = UserRole.SELLER
             )
             _currentUser.value = sellerUser
+            _currentFarmerProfile.value = null
             _currentSellerProfile.value = existingSeller
-            return Result.success(sellerUser)
+            val session = AuthSession(user = sellerUser, role = UserRole.SELLER, sellerProfile = existingSeller, token = sellerUser.token)
+            _currentSession.value = session
+            return Result.success(session)
         }
     }
 
-    suspend fun registerSeller(request: SellerRegistrationRequest): Result<SellerProfile> {
+    override suspend fun switchActiveRole(targetRole: UserRole): Result<AuthSession> {
+        switchUserRole(targetRole)
+        val session = _currentSession.value ?: return Result.failure(Exception("No active session"))
+        return Result.success(session)
+    }
+
+    override suspend fun getCurrentUser(): User? = _currentUser.value
+
+    override suspend fun isAuthenticated(): Boolean = _currentUser.value != null
+
+    override suspend fun logout(): Result<Unit> {
+        _currentUser.value = null
+        _currentFarmerProfile.value = null
+        _currentSellerProfile.value = null
+        _currentSession.value = null
+        return Result.success(Unit)
+    }
+
+    override suspend fun refreshToken(): Result<String> {
+        val newToken = "token_${System.currentTimeMillis()}"
+        _currentUser.value = _currentUser.value?.copy(token = newToken)
+        _currentSession.value = _currentSession.value?.copy(token = newToken)
+        return Result.success(newToken)
+    }
+
+    // -------------------------------------------------------------------------
+    // IFarmerProfileRepository Implementations
+    // -------------------------------------------------------------------------
+    override fun getFarmerProfileFlow(userId: String): Flow<FarmerProfile?> = _currentFarmerProfile.asStateFlow()
+
+    override suspend fun getFarmerProfile(userId: String): Result<FarmerProfile> {
+        val profile = _currentFarmerProfile.value ?: return Result.failure(Exception("Farmer profile not found"))
+        return Result.success(profile)
+    }
+
+    override suspend fun updateFarmerProfile(profile: FarmerProfile): Result<FarmerProfile> {
+        _currentFarmerProfile.value = profile.copy(updatedAt = System.currentTimeMillis())
+        _currentUser.value = _currentUser.value?.copy(name = profile.fullName)
+        return Result.success(profile)
+    }
+
+    override suspend fun updatePreferredLanguage(userId: String, languageCode: String): Result<Unit> {
+        _currentFarmerProfile.value = _currentFarmerProfile.value?.copy(preferredLanguage = languageCode)
+        return Result.success(Unit)
+    }
+
+    override suspend fun getSavedAddresses(farmerId: String): Flow<List<DeliveryAddress>> =
+        _currentFarmerProfile.map { it?.savedAddresses ?: emptyList() }
+
+    override suspend fun addDeliveryAddress(farmerId: String, address: DeliveryAddress): Result<DeliveryAddress> {
+        val current = _currentFarmerProfile.value ?: return Result.failure(Exception("Profile not found"))
+        val updatedList = current.savedAddresses + address
+        val defaultAddr = if (address.isDefault || current.defaultAddress == null) address else current.defaultAddress
+        _currentFarmerProfile.value = current.copy(savedAddresses = updatedList, defaultAddress = defaultAddr)
+        return Result.success(address)
+    }
+
+    override suspend fun setDefaultAddress(farmerId: String, addressId: String): Result<Unit> {
+        val current = _currentFarmerProfile.value ?: return Result.failure(Exception("Profile not found"))
+        val target = current.savedAddresses.find { it.id == addressId } ?: return Result.failure(Exception("Address not found"))
+        val updatedList = current.savedAddresses.map { it.copy(isDefault = it.id == addressId) }
+        _currentFarmerProfile.value = current.copy(savedAddresses = updatedList, defaultAddress = target.copy(isDefault = true))
+        return Result.success(Unit)
+    }
+
+    override suspend fun deleteDeliveryAddress(farmerId: String, addressId: String): Result<Unit> {
+        val current = _currentFarmerProfile.value ?: return Result.failure(Exception("Profile not found"))
+        val updatedList = current.savedAddresses.filter { it.id != addressId }
+        _currentFarmerProfile.value = current.copy(savedAddresses = updatedList)
+        return Result.success(Unit)
+    }
+
+    // -------------------------------------------------------------------------
+    // ISellerProfileRepository Implementations
+    // -------------------------------------------------------------------------
+    override suspend fun getSellerProfile(sellerId: String): Result<SellerProfile> {
+        val seller = _sellers.value.find { it.id == sellerId } ?: return Result.failure(Exception("Seller not found"))
+        return Result.success(seller)
+    }
+
+    override suspend fun getSellerProfileByUserId(userId: String): Result<SellerProfile?> {
+        val seller = _sellers.value.find { it.userId == userId }
+        return Result.success(seller)
+    }
+
+    override suspend fun updateSellerProfile(profile: SellerProfile): Result<SellerProfile> {
+        val updated = profile.copy(updatedAt = System.currentTimeMillis())
+        _sellers.value = _sellers.value.map { if (it.id == updated.id) updated else it }
+        if (_currentSellerProfile.value?.id == updated.id) {
+            _currentSellerProfile.value = updated
+        }
+        return Result.success(updated)
+    }
+
+    override suspend fun updateShopLocation(sellerId: String, latitude: Double, longitude: Double): Result<Unit> {
+        _sellers.value = _sellers.value.map {
+            if (it.id == sellerId) it.copy(latitude = latitude, longitude = longitude, updatedAt = System.currentTimeMillis()) else it
+        }
+        if (_currentSellerProfile.value?.id == sellerId) {
+            _currentSellerProfile.value = _currentSellerProfile.value?.copy(latitude = latitude, longitude = longitude)
+        }
+        return Result.success(Unit)
+    }
+
+    override suspend fun updateShopAvailability(sellerId: String, isAvailable: Boolean): Result<Unit> {
+        _sellers.value = _sellers.value.map {
+            if (it.id == sellerId) it.copy(isAvailable = isAvailable, updatedAt = System.currentTimeMillis()) else it
+        }
+        if (_currentSellerProfile.value?.id == sellerId) {
+            _currentSellerProfile.value = _currentSellerProfile.value?.copy(isAvailable = isAvailable)
+        }
+        return Result.success(Unit)
+    }
+
+    override fun observeSellerStatus(sellerId: String): Flow<SellerStatus> =
+        _sellers.map { list ->
+            list.find { it.id == sellerId }?.status ?: SellerStatus.PENDING
+        }
+
+    override suspend fun registerSeller(request: SellerRegistrationRequest): Result<SellerProfile> {
         val newSeller = SellerProfile(
             id = "seller_" + System.currentTimeMillis().toString().takeLast(6),
             userId = request.userId,
@@ -579,11 +790,6 @@ class AgriMarketplaceRepository(private val context: Context) {
         )
 
         return Result.success(newSeller)
-    }
-
-    fun logout() {
-        _currentUser.value = null
-        _currentSellerProfile.value = null
     }
 
     // -------------------------------------------------------------------------

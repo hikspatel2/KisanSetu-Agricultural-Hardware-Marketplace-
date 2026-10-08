@@ -570,6 +570,7 @@ fun SellerProductsScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, AgriBorder),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 12.dp)
@@ -578,6 +579,20 @@ fun SellerProductsScreen(
                         modifier = Modifier.padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                        ) {
+                            com.example.ui.components.ProductThumbnail(
+                                product = product,
+                                modifier = Modifier.fillMaxSize(),
+                                showBadges = false
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
                         Column(modifier = Modifier.weight(1f)) {
                             Text(product.brand, fontSize = 11.sp, color = TextSecondary)
                             Text(product.name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
@@ -794,6 +809,7 @@ fun SellerInventoryScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, AgriBorder),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 12.dp)
@@ -802,6 +818,20 @@ fun SellerInventoryScreen(
                         modifier = Modifier.padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                        ) {
+                            com.example.ui.components.ProductThumbnail(
+                                product = product,
+                                modifier = Modifier.fillMaxSize(),
+                                showBadges = false
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
                         Column(modifier = Modifier.weight(1f)) {
                             Text(product.name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                             Text("SKU: ${product.sku} • ₹${product.price.toInt()}", fontSize = 12.sp, color = TextSecondary)

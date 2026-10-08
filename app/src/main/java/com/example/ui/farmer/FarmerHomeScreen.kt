@@ -1,5 +1,6 @@
 package com.example.ui.farmer
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
@@ -25,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.model.Category
 import com.example.data.model.Product
 import com.example.data.model.SellerProfile
+import com.example.data.model.UserRole
 import com.example.ui.MainViewModel
 import com.example.ui.ScreenDestination
 import com.example.ui.components.ProductCard
@@ -47,81 +50,105 @@ fun FarmerHomeScreen(
     val categories by viewModel.categories.collectAsState()
     val nearbyShops by viewModel.nearbyApprovedShops.collectAsState()
     val filteredProducts by viewModel.filteredProducts.collectAsState()
+    val allProducts by viewModel.allProducts.collectAsState()
     val cartItems by viewModel.cartItems.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedCategory by viewModel.selectedCategoryFilter.collectAsState()
 
     val cartItemCount = cartItems.sumOf { it.quantity }
+    val discountedDeals = remember(allProducts) {
+        allProducts.filter { it.discountPrice != null && it.discountPrice < it.price }
+    }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.LocationOn,
-                                contentDescription = null,
-                                tint = AgriGreenContainer,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(AgriGreenPrimary, Color(0xFF0F766E), Color(0xFF065F46))
+                        )
+                    )
+            ) {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.LocationOn,
+                                    contentDescription = null,
+                                    tint = HarvestGoldLight,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = currentUser?.address?.ifEmpty { "Anand Agricultural Zone" } ?: "Anand, Gujarat",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                             Text(
-                                text = currentUser?.address?.ifEmpty { "Anand Agricultural Zone" } ?: "Anand, Gujarat",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                text = "Express Delivery within ${appSettings.deliveryRadiusKm.toInt()} km",
+                                fontSize = 11.sp,
+                                color = AgriGreenContainer,
+                                fontWeight = FontWeight.Medium
                             )
                         }
-                        Text(
-                            text = "Deliver within ${appSettings.deliveryRadiusKm.toInt()} km radius",
-                            fontSize = 11.sp,
-                            color = AgriGreenContainer
-                        )
-                    }
-                },
-                actions = {
-                    // Admin Simulator button
-                    IconButton(onClick = { viewModel.toggleAdminPanel(true) }) {
-                        Icon(
-                            imageVector = Icons.Default.AdminPanelSettings,
-                            contentDescription = "Admin Panel",
-                            tint = Color.White
-                        )
-                    }
-
-                    // Cart icon with badge
-                    BadgedBox(
-                        badge = {
-                            if (cartItemCount > 0) {
-                                Badge(
-                                    containerColor = HarvestGold,
-                                    contentColor = Color.White
-                                ) {
-                                    Text("$cartItemCount")
-                                }
-                            }
-                        },
-                        modifier = Modifier.padding(end = 8.dp)
-                    ) {
-                        IconButton(
-                            onClick = onNavigateToCart,
-                            modifier = Modifier.testTag("home_cart_button")
-                        ) {
+                    },
+                    actions = {
+                        // Switch Role icon (Farmer <-> Seller)
+                        IconButton(onClick = { viewModel.switchRole(UserRole.SELLER) }) {
                             Icon(
-                                imageVector = Icons.Default.ShoppingCart,
-                                contentDescription = "Cart",
+                                imageVector = Icons.Default.Storefront,
+                                contentDescription = "Switch to Seller",
                                 tint = Color.White
                             )
                         }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary
+
+                        // Admin Simulator button
+                        IconButton(onClick = { viewModel.toggleAdminPanel(true) }) {
+                            Icon(
+                                imageVector = Icons.Default.AdminPanelSettings,
+                                contentDescription = "Admin Panel",
+                                tint = Color.White
+                            )
+                        }
+
+                        // Cart icon with badge
+                        BadgedBox(
+                            badge = {
+                                if (cartItemCount > 0) {
+                                    Badge(
+                                        containerColor = HarvestGold,
+                                        contentColor = Color.White
+                                    ) {
+                                        Text("$cartItemCount", fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            },
+                            modifier = Modifier.padding(end = 8.dp)
+                        ) {
+                            IconButton(
+                                onClick = onNavigateToCart,
+                                modifier = Modifier.testTag("home_cart_button")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ShoppingCart,
+                                    contentDescription = "Cart",
+                                    tint = Color.White
+                                )
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent
+                    )
                 )
-            )
+            }
         },
         bottomBar = {
             NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
@@ -129,7 +156,7 @@ fun FarmerHomeScreen(
                     selected = true,
                     onClick = { /* Already Home */ },
                     icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-                    label = { Text("Home") }
+                    label = { Text("Home", fontWeight = FontWeight.SemiBold) }
                 )
                 NavigationBarItem(
                     selected = false,
@@ -144,7 +171,7 @@ fun FarmerHomeScreen(
                         BadgedBox(
                             badge = {
                                 if (cartItemCount > 0) {
-                                    Badge { Text("$cartItemCount") }
+                                    Badge(containerColor = HarvestGold) { Text("$cartItemCount") }
                                 }
                             }
                         ) {
@@ -171,22 +198,39 @@ fun FarmerHomeScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(bottom = 24.dp)
+                .padding(padding)
+                .background(AgriBackground),
+            contentPadding = PaddingValues(bottom = 28.dp)
         ) {
-            // Search Bar
+            // Search Bar Area
             item {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.primary)
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color(0xFF0F766E), AgriGreenPrimary, AgriBackground)
+                            )
+                        )
+                        .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
                 ) {
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { viewModel.searchQuery.value = it },
-                        placeholder = { Text("Search drip pipe, pumps, sprayers, cables...") },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        placeholder = {
+                            Text(
+                                "Search drip pipe, pumps, sprayers, cables...",
+                                fontSize = 13.sp,
+                                color = TextTertiary
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Search,
+                                contentDescription = null,
+                                tint = AgriGreenPrimary
+                            )
+                        },
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {
                                 IconButton(onClick = { viewModel.searchQuery.value = "" }) {
@@ -197,10 +241,10 @@ fun FarmerHomeScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color.White,
                             unfocusedContainerColor = Color.White,
-                            focusedBorderColor = Color.Transparent,
-                            unfocusedBorderColor = Color.Transparent
+                            focusedBorderColor = AgriGreenPrimary,
+                            unfocusedBorderColor = AgriBorder
                         ),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(14.dp),
                         singleLine = true,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -209,102 +253,257 @@ fun FarmerHomeScreen(
                 }
             }
 
-            // Agricultural Scheme & Subsidy Banner
+            // Promotional Agriculture Hero Banner
             item {
                 Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = AgriGreenContainer),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Surface(
-                            shape = CircleShape,
-                            color = AgriGreenPrimary,
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Default.WaterDrop,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(28.dp)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                Brush.linearGradient(
+                                    listOf(
+                                        Color(0xFF14532D),
+                                        Color(0xFF0F766E),
+                                        Color(0xFF0369A1)
+                                    )
                                 )
+                            )
+                            .padding(18.dp)
+                    ) {
+                        Column {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Surface(
+                                    color = HarvestGold,
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Text(
+                                        text = "🌾 KRUSHI DHAMAKA SALE",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Color.Black,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    )
+                                }
+
+                                Surface(
+                                    color = Color.White.copy(alpha = 0.2f),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Bolt,
+                                            contentDescription = null,
+                                            tint = HarvestGoldLight,
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(3.dp))
+                                        Text(
+                                            "2 Hr Farm Delivery",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                    }
+                                }
                             }
-                        }
 
-                        Spacer(modifier = Modifier.width(14.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
 
-                        Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Drip & Micro-Irrigation Subsidy",
+                                text = "Drip Pipes, Motors & Agricultural Hardware",
+                                fontSize = 17.sp,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                                color = OnAgriGreenContainer
+                                color = Color.White,
+                                lineHeight = 22.sp
                             )
+
                             Text(
-                                text = "Get ISI approved drip lines & sprinklers delivered directly to your farm within 2-4 hours.",
+                                text = "Up to 30% Off on ISI certified drip lines, knapsack spray pumps & valves directly from verified nearby hardware dealers.",
                                 fontSize = 12.sp,
-                                color = TextSecondary,
-                                lineHeight = 16.sp
+                                color = Color.White.copy(alpha = 0.9f),
+                                lineHeight = 16.sp,
+                                modifier = Modifier.padding(vertical = 4.dp)
                             )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(
+                                    color = Color.White,
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                    ) {
+                                        Text(
+                                            text = "Cash on Delivery Available",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = AgriGreenPrimary
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Icon(
+                                            Icons.Default.CheckCircle,
+                                            contentDescription = null,
+                                            tint = AgriGreenPrimary,
+                                            modifier = Modifier.size(13.dp)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                Surface(
+                                    color = HarvestGold,
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.clickable {
+                                        viewModel.navigateTo(com.example.ui.ScreenDestination.AgriculturalEquipment)
+                                    }
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                    ) {
+                                        Text(
+                                            text = "Equipment Grid",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = Color.Black
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Icon(
+                                            Icons.Default.ArrowForward,
+                                            contentDescription = null,
+                                            tint = Color.Black,
+                                            modifier = Modifier.size(13.dp)
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
 
-            // Categories Header & Chips
+            // Visual Category Selector Row
             item {
-                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                Column(modifier = Modifier.padding(top = 16.dp)) {
                     Text(
-                        text = "AGRICULTURAL CATEGORIES",
+                        text = "EXPLORE BY HARDWARE CATEGORY",
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.ExtraBold,
                         color = TextSecondary,
-                        letterSpacing = 1.sp
+                        letterSpacing = 1.sp,
+                        modifier = Modifier.padding(horizontal = 16.dp)
                     )
 
                     Spacer(modifier = Modifier.height(10.dp))
 
                     LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp)
                     ) {
+                        // "All" Category Item
                         item {
-                            FilterChip(
-                                selected = selectedCategory == null,
-                                onClick = { viewModel.selectedCategoryFilter.value = null },
-                                label = { Text("All Products") },
-                                leadingIcon = { Icon(Icons.Default.Apps, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                            CategoryCircleItem(
+                                title = "All",
+                                icon = Icons.Default.Apps,
+                                isSelected = selectedCategory == null,
+                                activeColor = AgriGreenPrimary,
+                                onClick = { viewModel.selectedCategoryFilter.value = null }
                             )
                         }
+
+                        // Dynamic Backend Categories
                         items(categories) { cat ->
-                            FilterChip(
-                                selected = selectedCategory.equals(cat.name, ignoreCase = true),
+                            val (catIcon, catColor) = when {
+                                cat.name.contains("Irrigation", ignoreCase = true) -> Pair(Icons.Default.WaterDrop, Color(0xFF0284C7))
+                                cat.name.contains("Tool", ignoreCase = true) -> Pair(Icons.Default.Build, Color(0xFFEA580C))
+                                cat.name.contains("Equipment", ignoreCase = true) -> Pair(Icons.Default.Agriculture, Color(0xFF047857))
+                                cat.name.contains("Electrical", ignoreCase = true) -> Pair(Icons.Default.Bolt, Color(0xFF2563EB))
+                                else -> Pair(Icons.Default.Handyman, Color(0xFF64748B))
+                            }
+
+                            CategoryCircleItem(
+                                title = cat.name,
+                                icon = catIcon,
+                                isSelected = selectedCategory.equals(cat.name, ignoreCase = true),
+                                activeColor = catColor,
                                 onClick = {
                                     viewModel.selectedCategoryFilter.value =
                                         if (selectedCategory.equals(cat.name, ignoreCase = true)) null else cat.name
-                                },
-                                label = { Text(cat.name) },
-                                leadingIcon = {
-                                    val icon = when (cat.name) {
-                                        "Irrigation" -> Icons.Default.WaterDrop
-                                        "Agricultural Tools" -> Icons.Default.Build
-                                        "Farm Equipment" -> Icons.Default.Agriculture
-                                        "Electrical" -> Icons.Default.Bolt
-                                        else -> Icons.Default.Handyman
-                                    }
-                                    Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp))
                                 }
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(18.dp))
+            }
+
+            // Hot Deals / Discounted Hardware (if available)
+            if (discountedDeals.isNotEmpty() && selectedCategory == null && searchQuery.isEmpty()) {
+                item {
+                    Column {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "🔥 TODAY'S TOP HARDWARE DEALS",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = AgriDealOrange,
+                                    letterSpacing = 1.sp
+                                )
+                            }
+                            Text(
+                                text = "Special Farmer Discount",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextSecondary
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp)
+                        ) {
+                            items(discountedDeals) { deal ->
+                                Box(modifier = Modifier.width(180.dp)) {
+                                    ProductCard(
+                                        product = deal,
+                                        onProductClick = { onNavigateToProduct(deal.id) },
+                                        onAddToCart = { viewModel.addToCart(deal) }
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(18.dp))
+                    }
+                }
             }
 
             // Nearby Approved Hardware Shops
@@ -318,7 +517,7 @@ fun FarmerHomeScreen(
                         Text(
                             text = "NEARBY HARDWARE SHOPS (${nearbyShops.size})",
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             color = TextSecondary,
                             letterSpacing = 1.sp
                         )
@@ -326,8 +525,8 @@ fun FarmerHomeScreen(
                         Text(
                             text = "Within ${appSettings.deliveryRadiusKm.toInt()} km",
                             fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
+                            fontWeight = FontWeight.Bold,
+                            color = AgriGreenPrimary
                         )
                     }
 
@@ -363,13 +562,29 @@ fun FarmerHomeScreen(
             // Available Products Grid Header
             item {
                 Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                    Text(
-                        text = if (selectedCategory != null) "$selectedCategory HARDWARE" else "POPULAR AGRICULTURAL HARDWARE",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextSecondary,
-                        letterSpacing = 1.sp
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (selectedCategory != null) "$selectedCategory HARDWARE (${filteredProducts.size})" else "ALL AGRICULTURAL HARDWARE (${filteredProducts.size})",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = TextSecondary,
+                            letterSpacing = 1.sp
+                        )
+
+                        if (selectedCategory != null) {
+                            Text(
+                                text = "Clear filter",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AgriGreenPrimary,
+                                modifier = Modifier.clickable { viewModel.selectedCategoryFilter.value = null }
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(10.dp))
 
@@ -389,7 +604,7 @@ fun FarmerHomeScreen(
                 }
             }
 
-            // Products in 2-column layout or list
+            // Products in 2-column layout
             items(filteredProducts.chunked(2)) { pair ->
                 Row(
                     modifier = Modifier
@@ -416,5 +631,52 @@ fun FarmerHomeScreen(
                 }
             }
         }
+    }
+}
+
+/**
+ * Modern circular category button with high visual feedback.
+ */
+@Composable
+private fun CategoryCircleItem(
+    title: String,
+    icon: ImageVector,
+    isSelected: Boolean,
+    activeColor: Color,
+    onClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .width(72.dp)
+    ) {
+        Surface(
+            shape = CircleShape,
+            color = if (isSelected) activeColor else activeColor.copy(alpha = 0.12f),
+            border = if (isSelected) BorderStroke(2.dp, activeColor) else BorderStroke(1.dp, AgriBorder),
+            shadowElevation = if (isSelected) 3.dp else 0.dp,
+            modifier = Modifier.size(54.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = if (isSelected) Color.White else activeColor,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Text(
+            text = title,
+            fontSize = 11.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            color = if (isSelected) TextPrimary else TextSecondary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }

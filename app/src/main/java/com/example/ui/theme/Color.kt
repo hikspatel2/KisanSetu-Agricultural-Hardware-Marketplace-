@@ -2,37 +2,46 @@ package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary Forest Green Palette (Agriculture & Trust)
-val AgriGreenPrimary = Color(0xFF1B5E20)
-val AgriGreenLight = Color(0xFF4C8C4A)
-val AgriGreenDark = Color(0xFF003300)
-val AgriGreenContainer = Color(0xFFD4EDDA)
-val OnAgriGreenContainer = Color(0xFF0F3912)
+// Primary Vibrant Emerald / Forest Green Palette (Agriculture & Trust)
+val AgriGreenPrimary = Color(0xFF15803D) // Modern vibrant emerald green
+val AgriGreenLight = Color(0xFF22C55E) // Bright vibrant leaf green
+val AgriGreenDark = Color(0xFF14532D) // Deep rich forest green
+val AgriGreenContainer = Color(0xFFDCFCE7) // Soft crisp mint container
+val OnAgriGreenContainer = Color(0xFF052E16) // Deep contrasting forest text
 
-// Secondary Harvest Gold / Earthy Amber (Hardware & Solar)
-val HarvestGold = Color(0xFFE67E22)
-val HarvestGoldLight = Color(0xFFF39C12)
-val HarvestGoldContainer = Color(0xFFFFE0B2)
-val OnHarvestGoldContainer = Color(0xFF5D2800)
+// Secondary Harvest Gold / Amber (Hardware, Solar & Deals)
+val HarvestGold = Color(0xFFF59E0B) // Warm rich amber
+val HarvestGoldLight = Color(0xFFFBBF24) // Golden sunlight
+val HarvestGoldDark = Color(0xFFB45309) // Deep golden amber
+val HarvestGoldContainer = Color(0xFFFEF3C7) // Soft creamy gold container
+val OnHarvestGoldContainer = Color(0xFF78350F) // Deep warm amber text
 
-// Tertiary Irrigation Teal (Water & Technology)
-val IrrigationTeal = Color(0xFF00796B)
-val IrrigationTealContainer = Color(0xFFB2DFDB)
+// Tertiary Irrigation Azure / Tech Blue (Water, Pipes & Technology)
+val IrrigationTeal = Color(0xFF0284C7) // Sky / irrigation azure
+val IrrigationTealLight = Color(0xFF38BDF8) // Light water blue
+val IrrigationTealContainer = Color(0xFFE0F2FE) // Soft water blue container
+val OnIrrigationTealContainer = Color(0xFF0369A1) // Deep blue text
+
+// Deal / Orange Tag
+val AgriDealOrange = Color(0xFFEA580C)
+val AgriDealContainer = Color(0xFFFFEDD5)
 
 // Background & Surface
-val AgriBackground = Color(0xFFF8F9FA)
-val AgriSurface = Color(0xFFFFFFFF)
-val AgriSurfaceVariant = Color(0xFFEEF2ED)
-val AgriBorder = Color(0xFFE0E5DF)
+val AgriBackground = Color(0xFFF8FAFC) // Crisp clean off-white
+val AgriSurface = Color(0xFFFFFFFF) // Pure white
+val AgriSurfaceVariant = Color(0xFFF1F5F9) // Subtle cool gray-green tint
+val AgriBorder = Color(0xFFE2E8F0) // Polished divider/stroke border
+val AgriBorderSubtle = Color(0xFFF1F5F9)
 
 // Status Colors
-val StatusSuccess = Color(0xFF2E7D32)
-val StatusWarning = Color(0xFFF57F17)
-val StatusError = Color(0xFFC62828)
-val StatusInfo = Color(0xFF1565C0)
-val StatusNeutral = Color(0xFF546E7A)
+val StatusSuccess = Color(0xFF16A34A)
+val StatusWarning = Color(0xFFF59E0B)
+val StatusError = Color(0xFFDC2626)
+val StatusInfo = Color(0xFF0284C7)
+val StatusNeutral = Color(0xFF64748B)
 
-// Text Colors
-val TextPrimary = Color(0xFF1C251D)
-val TextSecondary = Color(0xFF556357)
-val TextTertiary = Color(0xFF8A998C)
+// Text Colors (High Contrast & Clean Typography)
+val TextPrimary = Color(0xFF0F172A) // Deep charcoal for maximum readability
+val TextSecondary = Color(0xFF475569) // Clean slate for secondary info
+val TextTertiary = Color(0xFF94A3B8) // Muted slate for placeholders & struck prices
+
